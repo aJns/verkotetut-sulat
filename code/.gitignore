@@ -55,3 +55,7 @@ dkms.conf
 
 # binaries
 *.bin
+
+# vim
+*.swp
+*.swo

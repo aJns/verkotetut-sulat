@@ -14,4 +14,4 @@ flash: vilkutin-0x00000.bin
 	esptool.py write_flash 0 vilkutin-0x00000.bin 0x10000 vilkutin-0x10000.bin
 
 clean:
-	rm -f vilkutin vilkutin.o vilkutin-0x00000.bin vilkutin-0x10000.bin
+	rm -f vilkutin.bin vilkutin.o vilkutin-0x00000.bin vilkutin-0x10000.bin

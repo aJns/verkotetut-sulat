@@ -73,6 +73,7 @@ void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len
         return;
     }
 
+    os_printf("Server responded with:\r\n\n")
     os_printf(buf);
 }
 
@@ -91,40 +92,28 @@ void ICACHE_FLASH_ATTR connected_to_server(void *arg)
 
     char buf[69 + strlen(method) + strlen(api_path) + strlen(server_hostname) +
         strlen(headers) + strlen(post_headers)];
-    /* int len = os_printf(buf, */
-    /*                     "%s %s HTTP/1.1\r\n" */
-    /*                     "Host: %s:%d\r\n" */
-    /*                     "Connection: close\r\n" */
-    /*                     /1* "User-Agent: ESP8266\r\n" *1/ */
-    /*                     /1* "%s" *1/ */
-    /*                     /1* "%s" *1/ */
-    /*                     "\r\n", */
-    /*                     method, api_path, server_hostname, server_port, headers, post_headers); */
-
-
-    int len = os_sprintf(buf,
-                        "GET /api.html HTTP/1.1\r\n"
-                        "Host: arch_mini\r\n"
+    int len = os_printf(buf,
+                        "%s %s HTTP/1.1\r\n"
+                        "Host: %s:%d\r\n"
                         "Connection: close\r\n"
-                        "\r\n");
+                        "User-Agent: ESP8266\r\n"
+                        /* "%s" */
+                        /* "%s" */
+                        "\r\n",
+                        method, api_path, server_hostname, server_port, headers, post_headers);
 
 
-    os_printf("Sent request:\r\n\n");
-    /* os_printf("%s %s HTTP/1.1\r\n" */
-    /*           "Host: %s:%d\r\n" */
-    /*           "Connection: close\r\n" */
-    /*           /1* "User-Agent: ESP8266\r\n" *1/ */
-    /*           /1* "%s" *1/ */
-    /*           /1* "%s" *1/ */
-    /*           "\r\n", */
-    /*           method, api_path, server_hostname, server_port, headers, post_headers); */
+    /* int len = os_sprintf(buf, */
+    /*                     "GET /api.html HTTP/1.1\r\n" */
+    /*                     "Host: arch_mini\r\n" */
+    /*                     "Connection: close\r\n" */
+    /*                     "\r\n"); */
+
+
+    os_printf("Sending request:\r\n\n");
     os_printf(buf);
 
-    /* if (req->secure) */
-    /*     /1* espconn_secure_send(conn, (uint8_t *)buf, len); *1/ */
-    /* else */
     espconn_send(conn, (uint8_t *)buf, len);
-    os_printf("Sending request header\n");
 }
 
 void ICACHE_FLASH_ATTR disconnected_from_server(void *arg)

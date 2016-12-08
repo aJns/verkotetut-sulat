@@ -73,8 +73,33 @@ void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len
         return;
     }
 
-    os_printf("Server responded with:\r\n\n")
-    os_printf(buf);
+    /* os_printf("Server responded with:\r\n\n"); */
+    /* os_printf(buf); */
+
+    char led_state = '0';
+    char *keyword = "[led_state]";
+    int key_length = strlen(keyword);
+    int key_counter = 0;
+    int i;
+    for(i = 0; i < len; i++)
+    {
+        if (key_counter == key_length)
+        {
+            led_state = buf[i];
+            os_printf("Led state is: %c", buf[i]);
+
+            break;
+        }
+
+        if (buf[i] == keyword[key_counter])
+        {
+            key_counter++;
+        }
+        else
+        {
+            key_counter = 0;
+        }
+    }
 }
 
 void ICACHE_FLASH_ATTR connected_to_server(void *arg)
@@ -92,15 +117,15 @@ void ICACHE_FLASH_ATTR connected_to_server(void *arg)
 
     char buf[69 + strlen(method) + strlen(api_path) + strlen(server_hostname) +
         strlen(headers) + strlen(post_headers)];
-    int len = os_printf(buf,
-                        "%s %s HTTP/1.1\r\n"
-                        "Host: %s:%d\r\n"
-                        "Connection: close\r\n"
-                        "User-Agent: ESP8266\r\n"
-                        /* "%s" */
-                        /* "%s" */
-                        "\r\n",
-                        method, api_path, server_hostname, server_port, headers, post_headers);
+    int len = os_sprintf(buf,
+                         "%s %s HTTP/1.1\r\n"
+                         "Host: %s:%d\r\n"
+                         "Connection: close\r\n"
+                         "User-Agent: ESP8266\r\n"
+                         /* "%s" */
+                         /* "%s" */
+                         "\r\n",
+                         method, api_path, server_hostname, server_port, headers, post_headers);
 
 
     /* int len = os_sprintf(buf, */

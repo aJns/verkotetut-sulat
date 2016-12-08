@@ -5,7 +5,23 @@
 #include "user_interface.h"
 #include "espconn.h"
 #include "driver/uart.h"
+#include "mem.h"
+#include "limits.h"
+#include "user_config.h"
 
+/* typedef void (* http_callback)(char * response_body, int http_status, char * response_headers, int body_size); */
+
+/* typedef struct { */
+/* 	char * path; */
+/* 	int port; */
+/* 	char * post_data; */
+/* 	char * headers; */
+/* 	char * hostname; */
+/* 	char * buffer; */
+/* 	int buffer_size; */
+/* 	bool secure; */
+/* 	http_callback user_callback; */
+/* } request_args; */
 
 static int error_blink = 0;
 static const int pin = 4; 
@@ -33,24 +49,68 @@ void ICACHE_FLASH_ATTR some_timerfunc(void)
     }
 }
 
-void set_led_on(void)
+void ICACHE_FLASH_ATTR set_led_on(void)
 {
     error_blink = 0;
     gpio_output_set((1 << pin), 0, 0, 0);
 }
 
-void set_led_off(void)
+void ICACHE_FLASH_ATTR set_led_off(void)
 {
     error_blink = 0;
     gpio_output_set(0, (1 << pin), 0, 0);
 }
 
-void connected_to_server(void *arg)
+void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len)
 {
-    set_led_on();
+	struct espconn * conn = (struct espconn *)arg;
+
+	if (buf == NULL) {
+		return;
+	}
+
+        os_printf(buf);
 }
 
-void disconnected_from_server(void *arg)
+void ICACHE_FLASH_ATTR connected_to_server(void *arg)
+{
+    os_printf("Connected\n");
+    struct espconn * conn = (struct espconn *)arg;
+    /* request_args * req = (request_args *)conn->reverse; */
+
+    espconn_regist_recvcb(conn, server_responded);
+    /* espconn_regist_sentcb(conn, sent_callback); */
+
+    os_printf("espconn pointer address:   ");
+    os_printf("%p", conn);
+
+    const char *method = "GET";
+    const char *path = "/api.html";
+    const char *hostname = "arch_mini";
+    const char *port = "80";
+    const char *headers = "";
+    const char *post_headers = "";
+
+    char buf[69 + strlen(method) + strlen(path) + strlen(hostname) +
+        strlen(headers) + strlen(post_headers)];
+    int len = os_printf(buf,
+                         "%s %s HTTP/1.1\r\n"
+                         "Host: %s:%d\r\n"
+                         "Connection: close\r\n"
+                         "User-Agent: ESP8266\r\n"
+                         "%s"
+                         "%s"
+                         "\r\n",
+                         method, path, hostname, port, headers, post_headers);
+
+    /* if (req->secure) */
+    /*     /1* espconn_secure_send(conn, (uint8_t *)buf, len); *1/ */
+    /* else */
+    espconn_send(conn, (uint8_t *)buf, len);
+    os_printf("Sending request header\n");
+}
+
+void ICACHE_FLASH_ATTR disconnected_from_server(void *arg)
 {
     set_led_off();
 }
@@ -60,13 +120,17 @@ user_esp_platform_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 {
     if (ipaddr != NULL)
     {
-        tcp1.remote_port = 8000;
+        tcp1.remote_port = 80;
         tcp1.remote_ip[0] = ip4_addr1(ipaddr);
         tcp1.remote_ip[1] = ip4_addr2(ipaddr);
         tcp1.remote_ip[2] = ip4_addr3(ipaddr);
         tcp1.remote_ip[3] = ip4_addr4(ipaddr);
-        
-        os_printf("%u.%u.%u.%u", ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr));
+
+        os_printf("Server ip address: %u.%u.%u.%u",
+                  ip4_addr1(ipaddr),
+                  ip4_addr2(ipaddr),
+                  ip4_addr3(ipaddr),
+                  ip4_addr4(ipaddr));
 
 
         tcp1.local_port = espconn_port();
@@ -93,7 +157,6 @@ wifi_connected(System_Event_t *event)
     if (event->event == EVENT_STAMODE_GOT_IP )
     {
         espconn_gethostbyname(&conn1, "arch_mini", &server_ip, user_esp_platform_dns_found);
-        set_led_on();
     }
 
     if (event->event == EVENT_STAMODE_DISCONNECTED)

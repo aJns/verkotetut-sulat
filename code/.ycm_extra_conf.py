@@ -88,7 +88,9 @@ flags = [
 '-isystem',
 '/usr/avr/include',
 '-I',
-'/home/nikulaj/tools/esp-open-sdk/sdk/include'
+'/home/nikulaj/tools/esp-open-sdk/sdk/include',
+'-I',
+'./driver_lib/include'
 ]
 
 

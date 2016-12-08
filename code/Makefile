@@ -1,6 +1,6 @@
 CC = xtensa-lx106-elf-gcc
-CFLAGS = -I. -mlongcalls
-LDLIBS = -nostdlib -Wl,--start-group -lmain -lnet80211 -lwpa -llwip -lpp -lphy -lc -Wl,--end-group -lgcc
+CFLAGS = -I. -I./driver_lib/include -mlongcalls -DICACHE_FLASH
+LDLIBS = -nostdlib -Wl,--start-group -lmain -lnet80211 -lwpa -llwip -lpp -lphy -lc -Wl,--end-group -lgcc -L./driver_lib -ldriver
 LDFLAGS = -Teagle.app.v6.ld
 
 vilkutin-0x00000.bin: vilkutin

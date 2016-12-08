@@ -76,7 +76,7 @@ void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len
     /* os_printf("Server responded with:\r\n\n"); */
     /* os_printf(buf); */
 
-    char led_state = '0';
+    char led_state = 'a';
     char *keyword = "[led_state]";
     int key_length = strlen(keyword);
     int key_counter = 0;
@@ -100,6 +100,11 @@ void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len
             key_counter = 0;
         }
     }
+
+    if (led_state == '1')
+        set_led_on();
+    /* else if (led_state == '0') */
+        /* set_led_off(); */
 }
 
 void ICACHE_FLASH_ATTR connected_to_server(void *arg)
@@ -143,7 +148,7 @@ void ICACHE_FLASH_ATTR connected_to_server(void *arg)
 
 void ICACHE_FLASH_ATTR disconnected_from_server(void *arg)
 {
-    set_led_off();
+    /* set_led_off(); */
 }
 
     LOCAL void ICACHE_FLASH_ATTR
@@ -192,7 +197,7 @@ wifi_connected(System_Event_t *event)
 
     if (event->event == EVENT_STAMODE_DISCONNECTED)
     {
-        set_led_off();
+        /* set_led_off(); */
     }
 }
 

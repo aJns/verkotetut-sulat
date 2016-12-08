@@ -23,6 +23,10 @@
 /* 	http_callback user_callback; */
 /* } request_args; */
 
+const char *api_path = "/api.html";
+const char *server_hostname = "arch_mini";
+const int server_port = 80;
+
 static int error_blink = 0;
 static const int pin = 4; 
 static os_timer_t some_timer;
@@ -63,13 +67,13 @@ void ICACHE_FLASH_ATTR set_led_off(void)
 
 void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len)
 {
-	struct espconn * conn = (struct espconn *)arg;
+    struct espconn * conn = (struct espconn *)arg;
 
-	if (buf == NULL) {
-		return;
-	}
+    if (buf == NULL) {
+        return;
+    }
 
-        os_printf(buf);
+    os_printf(buf);
 }
 
 void ICACHE_FLASH_ATTR connected_to_server(void *arg)
@@ -81,27 +85,40 @@ void ICACHE_FLASH_ATTR connected_to_server(void *arg)
     espconn_regist_recvcb(conn, server_responded);
     /* espconn_regist_sentcb(conn, sent_callback); */
 
-    os_printf("espconn pointer address:   ");
-    os_printf("%p", conn);
-
     const char *method = "GET";
-    const char *path = "/api.html";
-    const char *hostname = "arch_mini";
-    const char *port = "80";
     const char *headers = "";
     const char *post_headers = "";
 
-    char buf[69 + strlen(method) + strlen(path) + strlen(hostname) +
+    char buf[69 + strlen(method) + strlen(api_path) + strlen(server_hostname) +
         strlen(headers) + strlen(post_headers)];
-    int len = os_printf(buf,
-                         "%s %s HTTP/1.1\r\n"
-                         "Host: %s:%d\r\n"
-                         "Connection: close\r\n"
-                         "User-Agent: ESP8266\r\n"
-                         "%s"
-                         "%s"
-                         "\r\n",
-                         method, path, hostname, port, headers, post_headers);
+    /* int len = os_printf(buf, */
+    /*                     "%s %s HTTP/1.1\r\n" */
+    /*                     "Host: %s:%d\r\n" */
+    /*                     "Connection: close\r\n" */
+    /*                     /1* "User-Agent: ESP8266\r\n" *1/ */
+    /*                     /1* "%s" *1/ */
+    /*                     /1* "%s" *1/ */
+    /*                     "\r\n", */
+    /*                     method, api_path, server_hostname, server_port, headers, post_headers); */
+
+
+    int len = os_sprintf(buf,
+                        "GET /api.html HTTP/1.1\r\n"
+                        "Host: arch_mini\r\n"
+                        "Connection: close\r\n"
+                        "\r\n");
+
+
+    os_printf("Sent request:\r\n\n");
+    /* os_printf("%s %s HTTP/1.1\r\n" */
+    /*           "Host: %s:%d\r\n" */
+    /*           "Connection: close\r\n" */
+    /*           /1* "User-Agent: ESP8266\r\n" *1/ */
+    /*           /1* "%s" *1/ */
+    /*           /1* "%s" *1/ */
+    /*           "\r\n", */
+    /*           method, api_path, server_hostname, server_port, headers, post_headers); */
+    os_printf(buf);
 
     /* if (req->secure) */
     /*     /1* espconn_secure_send(conn, (uint8_t *)buf, len); *1/ */
@@ -120,7 +137,7 @@ user_esp_platform_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 {
     if (ipaddr != NULL)
     {
-        tcp1.remote_port = 80;
+        tcp1.remote_port = server_port;
         tcp1.remote_ip[0] = ip4_addr1(ipaddr);
         tcp1.remote_ip[1] = ip4_addr2(ipaddr);
         tcp1.remote_ip[2] = ip4_addr3(ipaddr);
@@ -156,7 +173,7 @@ wifi_connected(System_Event_t *event)
 {
     if (event->event == EVENT_STAMODE_GOT_IP )
     {
-        espconn_gethostbyname(&conn1, "arch_mini", &server_ip, user_esp_platform_dns_found);
+        espconn_gethostbyname(&conn1, server_hostname, &server_ip, user_esp_platform_dns_found);
     }
 
     if (event->event == EVENT_STAMODE_DISCONNECTED)

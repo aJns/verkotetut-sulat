@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Test Page</title>
+    </head>
+    <body>
+        <p id="leditila"></p>
+    </body>
+
+    <script type="text/javascript">
+        var xmlhttp = false;
+	var pageContent = "";
+
+	loadLedState();
+
+	function loadLedState() {
+		xmlhttp = false;
+		pageContent = "";
+		loadXMLDoc('api.html');
+
+		if (xmlhttp != false) {
+			var leditila = pageContent.replace("[led_state]", "");
+			if (leditila == 1) {
+				document.getElementById('leditila').innerHTML = "Ledi päällä";
+			}
+			else if (leditila == 0) {
+				document.getElementById('leditila').innerHTML = "Ledi pois päältä";
+			}
+			else {
+				document.getElementById('leditila').innerHTML = "Virhe: Ledin tilaa ei saatu";
+			}
+		} else {
+			document.getElementById('leditila').innerHTML = "Virhe: Ledin tilaa ei saatu";
+		}
+		window.setTimeout(loadLedState, 10);
+	}
+
+
+        function loadXMLDoc(theURL) {
+            if (window.XMLHttpRequest)
+            {// code for IE7+, Firefox, Chrome, Opera, Safari, SeaMonkey
+                xmlhttp=new XMLHttpRequest();
+            }
+            else
+            {// code for IE6, IE5
+                xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp.onreadystatechange=function()
+            {
+                if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+			pageContent = xmlhttp.responseText;
+                }
+            }
+            xmlhttp.open("GET", theURL, false);
+            xmlhttp.send();
+        }
+    </script>
+
+</html>
+

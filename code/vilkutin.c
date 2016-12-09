@@ -29,29 +29,10 @@ const int server_port = 80;
 
 static int error_blink = 0;
 static const int pin = 4; 
-static os_timer_t some_timer;
+static os_timer_t check_timer;
 static struct espconn conn1;
 static esp_tcp tcp1;
 static ip_addr_t server_ip;
-
-void ICACHE_FLASH_ATTR some_timerfunc(void)
-{
-    if (error_blink == 0)
-    {
-        return;
-    }
-    //Do blinky stuff
-    if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin))
-    {
-        // set gpio low
-        gpio_output_set(0, (1 << pin), 0, 0);
-    }
-    else
-    {
-        // set gpio high
-        gpio_output_set((1 << pin), 0, 0, 0);
-    }
-}
 
 void ICACHE_FLASH_ATTR set_led_on(void)
 {
@@ -65,57 +46,8 @@ void ICACHE_FLASH_ATTR set_led_off(void)
     gpio_output_set(0, (1 << pin), 0, 0);
 }
 
-void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len)
+void ICACHE_FLASH_ATTR send_request(struct espconn *conn)
 {
-    struct espconn * conn = (struct espconn *)arg;
-
-    if (buf == NULL) {
-        return;
-    }
-
-    /* os_printf("Server responded with:\r\n\n"); */
-    /* os_printf(buf); */
-
-    char led_state = 'a';
-    char *keyword = "[led_state]";
-    int key_length = strlen(keyword);
-    int key_counter = 0;
-    int i;
-    for(i = 0; i < len; i++)
-    {
-        if (key_counter == key_length)
-        {
-            led_state = buf[i];
-            os_printf("Led state is: %c", buf[i]);
-
-            break;
-        }
-
-        if (buf[i] == keyword[key_counter])
-        {
-            key_counter++;
-        }
-        else
-        {
-            key_counter = 0;
-        }
-    }
-
-    if (led_state == '1')
-        set_led_on();
-    /* else if (led_state == '0') */
-        /* set_led_off(); */
-}
-
-void ICACHE_FLASH_ATTR connected_to_server(void *arg)
-{
-    os_printf("Connected\n");
-    struct espconn * conn = (struct espconn *)arg;
-    /* request_args * req = (request_args *)conn->reverse; */
-
-    espconn_regist_recvcb(conn, server_responded);
-    /* espconn_regist_sentcb(conn, sent_callback); */
-
     const char *method = "GET";
     const char *headers = "";
     const char *post_headers = "";
@@ -132,23 +64,76 @@ void ICACHE_FLASH_ATTR connected_to_server(void *arg)
                          "\r\n",
                          method, api_path, server_hostname, server_port, headers, post_headers);
 
-
-    /* int len = os_sprintf(buf, */
-    /*                     "GET /api.html HTTP/1.1\r\n" */
-    /*                     "Host: arch_mini\r\n" */
-    /*                     "Connection: close\r\n" */
-    /*                     "\r\n"); */
-
-
     os_printf("Sending request:\r\n\n");
     os_printf(buf);
 
     espconn_send(conn, (uint8_t *)buf, len);
 }
 
+void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len)
+{
+    struct espconn * conn = (struct espconn *)arg;
+
+    if (buf == NULL) {
+        return;
+    }
+
+    /* os_printf("Server responded with:\r\n\n"); */
+    /* os_printf(buf); */
+
+    char led_state = '0';
+    char *keyword = "[led_state]";
+    int key_length = strlen(keyword);
+    int key_counter = 0;
+    int i;
+    for(i = 0; i < len; i++)
+    {
+        if (key_counter == key_length)
+        {
+            led_state = buf[i];
+            os_printf("Led state is: %c\r\n\n", buf[i]);
+
+            break;
+        }
+
+        if (buf[i] == keyword[key_counter])
+        {
+            key_counter++;
+        }
+        else
+        {
+            key_counter = 0;
+        }
+    }
+
+    if (led_state == '1')
+        set_led_on();
+    else
+        set_led_off();
+}
+
+void ICACHE_FLASH_ATTR connect_to_server(void)
+{
+    if (espconn_connect(&conn1) != 0)
+    {
+        error_blink = 1;
+    }
+}
+
+void ICACHE_FLASH_ATTR connected_to_server(void *arg)
+{
+    os_printf("Connected\n");
+    struct espconn * conn = (struct espconn *)arg;
+    /* request_args * req = (request_args *)conn->reverse; */
+
+    espconn_regist_recvcb(conn, server_responded);
+    /* espconn_regist_sentcb(conn, sent_callback); */
+    send_request(conn);
+}
+
 void ICACHE_FLASH_ATTR disconnected_from_server(void *arg)
 {
-    /* set_led_off(); */
+    connect_to_server();
 }
 
     LOCAL void ICACHE_FLASH_ATTR
@@ -168,7 +153,6 @@ user_esp_platform_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
                   ip4_addr3(ipaddr),
                   ip4_addr4(ipaddr));
 
-
         tcp1.local_port = espconn_port();
         struct ip_info ipconfig;
         wifi_get_ip_info(STATION_IF, &ipconfig);
@@ -180,10 +164,7 @@ user_esp_platform_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
         espconn_regist_disconcb(&conn1, disconnected_from_server);
         espconn_regist_connectcb(&conn1, connected_to_server);
 
-        if (espconn_connect(&conn1) != 0)
-        {
-            error_blink = 1;
-        }
+        connect_to_server();
     }
 }
 
@@ -201,6 +182,30 @@ wifi_connected(System_Event_t *event)
     }
 }
 
+void ICACHE_FLASH_ATTR check_timerfunc(void)
+{
+    /* if (error_blink == 0) */
+    /* { */
+    /*     return; */
+    /* } */
+    /* //Do blinky stuff */
+    /* if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) */
+    /* { */
+    /*     // set gpio low */
+    /*     gpio_output_set(0, (1 << pin), 0, 0); */
+    /* } */
+    /* else */
+    /* { */
+    /*     // set gpio high */
+    /*     gpio_output_set((1 << pin), 0, 0, 0); */
+    /* } */
+
+    if (conn1.state == ESPCONN_NONE || conn1.state == ESPCONN_CLOSE)
+    {
+        connect_to_server();
+    }
+}
+
 // ICACHE_FLASH_ATTR merkityt funktiot ladataan RAMmiin tarvittaessa, muut bootissa
     void ICACHE_FLASH_ATTR
 init_done(void)
@@ -208,8 +213,8 @@ init_done(void)
     gpio_output_set(0, 0, (1 << pin), 0);
 
     // setup timer (500ms, repeating)
-    os_timer_setfn(&some_timer, (os_timer_func_t *)some_timerfunc, NULL);
-    os_timer_arm(&some_timer, 100, 1);
+    os_timer_setfn(&check_timer, (os_timer_func_t *)check_timerfunc, NULL);
+    os_timer_arm(&check_timer, 1000, 1);
 
     const char ssid[32] = "Koti_0A0C";
     const char password[32] = "XHK49JNXVCCAT";

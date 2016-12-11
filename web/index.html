@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Test Page</title>
+        <title>IoT Ledivilkutin</title>
     </head>
     <body>
         <p id="leditila"></p>
+	<button type="button" onclick="toggleLedState()">Vaihda tila</button>
     </body>
 
     <script type="text/javascript">
         var xmlhttp = false;
 	var pageContent = "";
+	var apiAddress = "api.php";
+	var leditila = 0;
+	var timeBetweenRequests = 100;
 
 	loadLedState();
 
 	function loadLedState() {
 		xmlhttp = false;
 		pageContent = "";
-		loadXMLDoc('api.html');
+		loadXMLDoc(apiAddress);
 
 		if (xmlhttp != false) {
-			var leditila = pageContent.replace("[led_state]", "");
+			leditila = pageContent.replace("[led_state]", "");
 			if (leditila == 1) {
 				document.getElementById('leditila').innerHTML = "Ledi päällä";
 			}
@@ -32,7 +36,7 @@
 		} else {
 			document.getElementById('leditila').innerHTML = "Virhe: Ledin tilaa ei saatu";
 		}
-		window.setTimeout(loadLedState, 10);
+		window.setTimeout(loadLedState, timeBetweenRequests);
 	}
 
 
@@ -55,6 +59,17 @@
             xmlhttp.open("GET", theURL, false);
             xmlhttp.send();
         }
+
+	function toggleLedState() {
+	    var uusitila = 0;
+	    if (leditila == 0) {
+		uusitila = 1;
+	    }
+	    var xmlhttp = new XMLHttpRequest();
+	    xmlhttp.open("POST", "api.php");
+	    xmlhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+	    xmlhttp.send("led_state=" + uusitila);
+	}
     </script>
 
 </html>

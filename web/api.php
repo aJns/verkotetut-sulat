@@ -20,7 +20,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
         break;
 
     case 'GET':
-        echo file_get_contents($filename);
+        echo "[led_state]" . file_get_contents($filename);
         break;
 
     default:

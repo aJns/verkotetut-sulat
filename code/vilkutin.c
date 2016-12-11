@@ -23,13 +23,17 @@
 /* 	http_callback user_callback; */
 /* } request_args; */
 
-const char *api_path = "/api.html";
+const char wifi_ssid[32] = "tottoroo";
+const char wifi_passwd[32] = "pekkalanit77";
+
+const char *api_path = "/api.php";
 const char *server_hostname = "arch_mini";
 const int server_port = 80;
 
 static int error_blink = 0;
 static const int pin = 4; 
 static os_timer_t check_timer;
+static const uint32_t check_timer_interval = 100;
 static struct espconn conn1;
 static esp_tcp tcp1;
 static ip_addr_t server_ip;
@@ -64,8 +68,8 @@ void ICACHE_FLASH_ATTR send_request(struct espconn *conn)
                          "\r\n",
                          method, api_path, server_hostname, server_port, headers, post_headers);
 
-    os_printf("Sending request:\r\n\n");
-    os_printf(buf);
+    /* os_printf("Sending request:\r\n\n"); */
+    /* os_printf(buf); */
 
     espconn_send(conn, (uint8_t *)buf, len);
 }
@@ -133,7 +137,7 @@ void ICACHE_FLASH_ATTR connected_to_server(void *arg)
 
 void ICACHE_FLASH_ATTR disconnected_from_server(void *arg)
 {
-    connect_to_server();
+    /* connect_to_server(); */
 }
 
     LOCAL void ICACHE_FLASH_ATTR
@@ -214,16 +218,13 @@ init_done(void)
 
     // setup timer (500ms, repeating)
     os_timer_setfn(&check_timer, (os_timer_func_t *)check_timerfunc, NULL);
-    os_timer_arm(&check_timer, 1000, 1);
-
-    const char ssid[32] = "Koti_0A0C";
-    const char password[32] = "XHK49JNXVCCAT";
+    os_timer_arm(&check_timer, check_timer_interval, 1);
 
     struct station_config stationConf;
 
     wifi_set_opmode( STATION_MODE );
-    os_memcpy(&stationConf.ssid, ssid, 32);
-    os_memcpy(&stationConf.password, password, 32);
+    os_memcpy(&stationConf.ssid, wifi_ssid, 32);
+    os_memcpy(&stationConf.password, wifi_passwd, 32);
     wifi_station_set_config(&stationConf);
     wifi_set_event_handler_cb(wifi_connected);
     wifi_station_connect();

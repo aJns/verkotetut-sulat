@@ -1,0 +1,8 @@
+*.swp
+*.swo
+
+tyoselostus.pdf
+*.aux
+*.bbl
+*.blg
+*.log

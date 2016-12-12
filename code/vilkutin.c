@@ -30,8 +30,13 @@ const char *api_path = "/api.php";
 const char *server_hostname = "arch_mini";
 const int server_port = 80;
 
-static int error_blink = 0;
-static const int pin = 4; 
+static const int led_pin = 4; 
+static const int button_pin = 5; 
+static const int button_counter_max = 10; 
+static int led_status = 0;
+static int button_counter = 0;
+static int connection_defined = 0;
+static int toggle_led = 0;
 static os_timer_t check_timer;
 static const uint32_t check_timer_interval = 100;
 static struct espconn conn1;
@@ -40,17 +45,17 @@ static ip_addr_t server_ip;
 
 void ICACHE_FLASH_ATTR set_led_on(void)
 {
-    error_blink = 0;
-    gpio_output_set((1 << pin), 0, 0, 0);
+    led_status = 1;
+    gpio_output_set((1 << led_pin), 0, 0, 0);
 }
 
 void ICACHE_FLASH_ATTR set_led_off(void)
 {
-    error_blink = 0;
-    gpio_output_set(0, (1 << pin), 0, 0);
+    led_status = 0;
+    gpio_output_set(0, (1 << led_pin), 0, 0);
 }
 
-void ICACHE_FLASH_ATTR send_request(struct espconn *conn)
+void ICACHE_FLASH_ATTR send_get_request(struct espconn *conn)
 {
     const char *method = "GET";
     const char *headers = "";
@@ -74,6 +79,34 @@ void ICACHE_FLASH_ATTR send_request(struct espconn *conn)
     espconn_send(conn, (uint8_t *)buf, len);
 }
 
+void ICACHE_FLASH_ATTR send_post_request(struct espconn *conn, int led_state)
+{
+    const char *method = "POST";
+    const char *post_headers = "Content-Length: 11\r\nContent-Type: application/x-www-form-urlencoded";
+    const char content[32];
+
+    os_sprintf(content, "led_state=%d\r\n\r\n", led_state);
+
+    char buf[69 + strlen(method) + strlen(api_path) + strlen(server_hostname) +
+        strlen(post_headers) + strlen(content)];
+    int len = os_sprintf(buf,
+                         "%s %s HTTP/1.1\r\n"
+                         "Host: %s:%d\r\n"
+                         "Connection: close\r\n"
+                         "User-Agent: ESP8266\r\n"
+                         "%s"
+                         "\r\n"
+                         "\r\n"
+                         "%s"
+                         "\r\n",
+                         method, api_path, server_hostname, server_port, post_headers, content);
+
+    os_printf("Sending POST request:\r\n\n");
+    os_printf(buf);
+
+    espconn_send(conn, (uint8_t *)buf, len);
+}
+
 void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len)
 {
     struct espconn * conn = (struct espconn *)arg;
@@ -82,8 +115,8 @@ void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len
         return;
     }
 
-    /* os_printf("Server responded with:\r\n\n"); */
-    /* os_printf(buf); */
+    os_printf("Server responded with:\r\n\n");
+    os_printf(buf);
 
     char led_state = '0';
     char *keyword = "[led_state]";
@@ -95,7 +128,7 @@ void ICACHE_FLASH_ATTR server_responded(void *arg, char *buf, unsigned short len
         if (key_counter == key_length)
         {
             led_state = buf[i];
-            os_printf("Led state is: %c\r\n\n", buf[i]);
+            /* os_printf("Led state is: %c\r\n\n", buf[i]); */
 
             break;
         }
@@ -120,19 +153,41 @@ void ICACHE_FLASH_ATTR connect_to_server(void)
 {
     if (espconn_connect(&conn1) != 0)
     {
-        error_blink = 1;
     }
+}
+
+void ICACHE_FLASH_ATTR toggle_led_state(void)
+{
+    button_counter = 0;
+
+    if (connection_defined != 1)
+    {
+        return;
+    }
+
+    if (led_status == 1)
+    {
+        send_post_request(&conn1, 0);
+    }
+    else
+    {
+        send_post_request(&conn1, 1);
+    }
+    toggle_led = 0;
 }
 
 void ICACHE_FLASH_ATTR connected_to_server(void *arg)
 {
-    os_printf("Connected\n");
+    /* os_printf("Connected\n"); */
     struct espconn * conn = (struct espconn *)arg;
     /* request_args * req = (request_args *)conn->reverse; */
 
     espconn_regist_recvcb(conn, server_responded);
     /* espconn_regist_sentcb(conn, sent_callback); */
-    send_request(conn);
+    if (toggle_led)
+        toggle_led_state();
+    else
+        send_get_request(conn);
 }
 
 void ICACHE_FLASH_ATTR disconnected_from_server(void *arg)
@@ -168,6 +223,8 @@ user_esp_platform_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
         espconn_regist_disconcb(&conn1, disconnected_from_server);
         espconn_regist_connectcb(&conn1, connected_to_server);
 
+        connection_defined = 1;
+
         connect_to_server();
     }
 }
@@ -188,25 +245,24 @@ wifi_connected(System_Event_t *event)
 
 void ICACHE_FLASH_ATTR check_timerfunc(void)
 {
-    /* if (error_blink == 0) */
-    /* { */
-    /*     return; */
-    /* } */
-    /* //Do blinky stuff */
-    /* if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1 << pin)) */
-    /* { */
-    /*     // set gpio low */
-    /*     gpio_output_set(0, (1 << pin), 0, 0); */
-    /* } */
-    /* else */
-    /* { */
-    /*     // set gpio high */
-    /*     gpio_output_set((1 << pin), 0, 0, 0); */
-    /* } */
-
-    if (conn1.state == ESPCONN_NONE || conn1.state == ESPCONN_CLOSE)
+    uint32 gpio_status = GPIO_INPUT_GET(button_pin);
+    if (gpio_status == 1)// && button_counter > button_counter_max)
     {
-        connect_to_server();
+        os_printf("\r\nButton pressed!\r\n");
+        // button pressed
+        toggle_led = 1;
+    }
+    else
+    {
+        if (button_counter <= 2*button_counter_max)
+        {
+            button_counter++;
+        }
+
+        if (conn1.state == ESPCONN_NONE || conn1.state == ESPCONN_CLOSE)
+        {
+            connect_to_server();
+        }
     }
 }
 
@@ -214,9 +270,9 @@ void ICACHE_FLASH_ATTR check_timerfunc(void)
     void ICACHE_FLASH_ATTR
 init_done(void)
 {
-    gpio_output_set(0, 0, (1 << pin), 0);
+    gpio_output_set(0, 0, (1 << led_pin), 0);
+    gpio_output_set(0, 0, 0, (1 << button_pin));
 
-    // setup timer (500ms, repeating)
     os_timer_setfn(&check_timer, (os_timer_func_t *)check_timerfunc, NULL);
     os_timer_arm(&check_timer, check_timer_interval, 1);
 

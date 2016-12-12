@@ -1,6 +1,6 @@
 texname = tyoselostus
 
-tyoselostus: $(texname).tex $(texname).bib
+tyoselostus: $(texname).tex sisalto.tex $(texname).bib
 	rubber --pdf $(texname).tex
 
 clean: $(texname).tex

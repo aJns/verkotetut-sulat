@@ -6,3 +6,5 @@ tyoselostus.pdf
 *.bbl
 *.blg
 *.log
+*.bcf
+*.run.xml

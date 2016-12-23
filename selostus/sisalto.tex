@@ -1,11 +1,11 @@
 \section{Suunnitelu}
 Tarkoituksena oli tehdä sulautettu laite joka
-\begin{enumerate}
+\begin{itemize}
   \item voi ohjata LEDiä
   \item voidaan liittää verkkoon
   \item mahdollistaa LEDin ohjauksen verkkosivun kautta tai fyysistä nappia
     painamalla.
-\end{enumerate}
+\end{itemize}
 Vaatimuksena oli myös että piirilevy on itsetehty ja että siinä käytetään
 mikrokontrolleria joka yhdistetään nettiin jonkunlaisen modeemin kautta
 käyttäen AT-komentoja. Valitettavasti en itse ollut tietoinen tästä viimeisestä
@@ -41,22 +41,22 @@ moduulien välillä ei ole huomattavia eroja.
 Koska en käyttänyt työssäni erillistä mikrokontrolleria, jäi piirilevyni
 erittäin yksinkertaiseksi. Itse jakaisin suunnittelemani piirin toiminnoiltaan
 kolmeen osaan:
-\begin{enumerate}
+\begin{itemize}
   \item Moduulin liitäntöjen tarjoaminen piikkirimoilla
   \item Nappi resetointia varten ja kytkin piirin boottaustilan vaihtamiseksi
     flash-ohjelmoinnin ja flashista boottamisen välillä
   \item Virransyöttö
-\end{enumerate}
+\end{itemize}
 
 Koska itse halusin tehdä piirilevyn jota voisin käyttää myös kurssin jälkeen,
 oli suhteellisen tärkeää että mahdollisimman moniin moduulin liitännöistä
 pääsisi kätevästi käsiksi. Pinnirimoja on 3:
-\begin{enumerate}
+\begin{itemize}
   \item UART yhteyteen tarvittavat liitännät (mukaanlukien maa ja +3.3V ja +5V
     jännitteet)
   \item GPIO:t
   \item SPI liitännät
-\end{enumerate}
+\end{itemize}
 
 Omassa piirissäni on kytkin toimintatilan vaihtamiseen ja reset-nappi.
 ESP8266 piirin toimintatila määräytyy sen perusteella missä jännitteessä
@@ -81,9 +81,35 @@ säädettävää lineaariregulaattoria. Regulaattorin ulos- ja sisääntulossa o
 \(1\mu{}F\) kondensaattori ja lisäksi ESP-12 moduulin virtapinnien vieressä on
 \(33\mu{}F\) kondensaattori (joka lienee hieman ylimitoitettu).
 
-1.0 version suunniteluvirheitä ja parannuksia 2.0 versioon
-
-Kuvia
+Kuvassa~\ref{fig:piiri-etu} on kuva piirilevyn etupuolesta, jossa näkyy hyvin
+virransyötön komponentit (konkat, regulaattori ja paristoliitäntä) ja
+piikkirimat. Vasemmalla ylhäällä on UART:tiin tarvitta piikkirima, sen
+alapuolella SPI rima ja oikealla GPIO rima. Kuvassa~\ref{fig:piiri-taka} on
+piirilevyn toinen puoli. Tällä puolella on itse ESP moduuli, reset-nappi ja
+boottaustilan muuttava kytkin. Kuvassa~\ref{fig:nappi-ja-paristo} on piirilevyn
+etupuoli ja LEDin tilaa muuttava ad-hoc painonappi ja teholähteenä toimiva
+paristo.
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.9\linewidth]{front}
+  \caption{Piirilevyn etupuoli}
+\label{fig:piiri-etu}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.9\linewidth]{back}
+  \caption{Piirilevyn takapuoli}
+\label{fig:piiri-taka}
+\end{minipage}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\linewidth]{nappi-ja-paristo}
+  \caption{}
+\label{fig:nappi-ja-paristo}
+\end{figure}
 
 \section{Ohjelmisto}
 
@@ -91,3 +117,10 @@ Kuvia
 \label{sec:extra}
 
 \section{Yhteenveto}
+
+Projektin aikana törmäsin kuitenkin pariin suunnitteluvirheeseen:
+\begin{itemize}
+  \item Pienellä vaivalla olisin voinut lisätä piirille USB-to-UART piirin ja
+    USB liittimen, joka olisi tehnyt ohjelmoinnista todella paljon helpompaa.
+    Lisää tästä kohdassa~\ref{sec:extra}
+\end{itemize}

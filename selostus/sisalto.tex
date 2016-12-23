@@ -1,9 +1,29 @@
 \section{Suunnitelu}
+Tarkoituksena oli tehdä sulautettu laite joka
+\begin{enumerate}
+\item voi ohjata LEDiä
+\item voidaan liittää verkkoon
+\item mahdollistaa LEDin ohjauksen verkkosivun kautta tai fyysistä nappia
+painamalla.
+\end{enumerate}
+Vaatimuksena oli myös että piirilevy on itsetehty ja että siinä käytetään
+mikrokontrolleria joka yhdistetään nettiin jonkunlaisen modeemin kautta
+käyttäen AT-komentoja. Valitettavasti en itse ollut tietoinen tästä viimeisestä
+vaatimuksesta, vaan ohjelmoin ESP8266 piirin suoraan. Tämän seurauksena
+selostuksessa on puoli sivua ylimääräistä kohdassa~\ref{sec:extra}. Huomaamatta
+jäi myös vaatimus fyysisestä painonapista, mutta sen lisääminen ei
+onneksi ollut kovin iso työ.
 
-\section{Hardware}
+Heti kun kuulin harjoitustyöstä halusin kokeilla käyttää ESP8266 moduulia
+itsenäisesti ilman ohjaavaa mikrokontrolleria. Halusin myös ohjelmoida piirin
+suoraan, enkä käyttää välissä käyttöjärjestelmää tai kolmannen osapuolen
+firmwarea, kuten esimerkiksi NodeMcu:ta.\cite{nodemcu}
 
-\section{Software}
+\section{Piirilevy ja komponentit}
 
-\section{ESP:n käyttäminen ilman mikrokontrolleria}
+\section{Ohjelmisto}
+
+\section{ESP8266 moduulin käyttäminen ilman mikrokontrolleria}
+\label{sec:extra}
 
 \section{Yhteenveto}

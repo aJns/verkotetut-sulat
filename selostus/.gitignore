@@ -8,3 +8,4 @@ tyoselostus.pdf
 *.log
 *.bcf
 *.run.xml
+*.out

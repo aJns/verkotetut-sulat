@@ -23,10 +23,13 @@ Syy tähän oli se että olin jo pitkään halunnut tutustua ESP8266 piiriin, mu
 ollut löytänyt sille aikaa. Halusin siis käyttää harkkatyön mahdollisimman
 hyvin hyödyksi, ja uskoin että laitteistonläheinen C ja alustan tuomat
 rajoitukset olisivat opettavaisia. Tykkään myös pyrkiä projekteissani
-yksinkertaisuuteen aina kun se on mahdollista ja/tai järkevää.
+yksinkertaisuuteen aina kun se on mahdollista ja/tai järkevää. Halusin myös
+tehdä mahdollisimman uudelleenkäytettävän piirilevyn, jotta sen hyödyllisyys ei
+rajoittuisi tähän kurssiin.
 
-Halusin myös tehdä mahdollisimman uudelleenkäytettävän piirilevyn, jotta sen
-hyödyllisyys ei rajoittuisi tähän kurssiin.
+Nettisivua en suunnitellut etukäteen yhtä tarkasti kuin piirilevyä. Alusta asti
+oli kuitenkin selvää että toteutus olisi mahdollisimman yksinkertainen, mikä
+tarkoittaisi luultavasti PHP:llä toteutettua backend-sovellusta.
 
 \section{Piirilevy ja komponentit}
 Päädyin käyttämään työssäni ESP-12E moduulia oikeastaan siitä syystä että sain
@@ -112,9 +115,46 @@ paristo.
 \end{figure}
 
 \section{Ohjelmisto}
+Ohjelmisto koostuu itse sulautetun laitteen ohjelmistosta, nettisivusta jonka
+kautta käyttäjä näkee ja voi muuttaa ledin tilan ja web API:sta jonka kautta
+ledin tila luetaan ja muutetaan.
+
+\subsection{Nettisivun ja API:n ohjelmointi}
+Nettisivun käyttäjäpuoli on yksinkertainen sivu, jossa lukee LEDin nykyinen
+tila ja nappi mistä tilaa voi muuttaa. Sivu on perus HTML koodia, sillä
+erotuksella että LEDin tilan lukeminen ja muuttaminen tehdään AJAX~\cite{ajax}
+tekniikalla, mikä siis tarkoittaa sitä että tiedonsiirto tehdään asynkronisesti
+JavaScript koodilla, jolloin sivua ei tarvitse päivittää kun LEDin tila
+päivittyy. LEDin tila haetaan HTTP:n GET-pyynnöllä ja muutetaan POST-pyynnöllä.
+Molempiin voisi tietenkin käyttää GET:iä, mutta olen sitä mieltä että kun HTTP
+tarjoaa erikseen pyynnön tiedon lähettämiseen palvelimelle, tulisin tietoa
+lähettäessä käyttää sitä.
+
+Palvelimen puolella on PHP-skripti, joka lähetetyn pyynnön tyypistä (GET vai
+POST) riippuen joko palauttaa LEDin tilan tai päivittää sen. LEDin tila
+palautetaan formaatilla ``[led\_state]1'' tai ``[led\_state]0''.
+``[led\_state]'' rimpsu helpottaa viestin jäsennystä ESP:n ohjelmiston
+puolella. Itse käytin WWW-palvelimena NGINX palvelinta.
+
+\subsection{ESP8266:n ohjelmointi}
+Käytin ohjelmoinnissa hyväkseni esp-open-sdk~\cite{esp-open-sdk} nimistä
+projektia. Projekti sisältää kääntäjän ja ohjelmointityökalun, jotka ovat
+molemmat avointa lähdekoodia. Projektin mukana tulee myös Espressif:n SDK, joka
+siis sisältää ESP8266:n ohjelmoinnissa tarvittavat rajapinnat.
+
+Varsinkin ohjelmoinnissa tulee ottaa huomioon muutamia teknisiä yksityiskohtia
+jotka liittyvät piirin ominaisuuksiin. Käsittelen näitä tarkemmin
+kohdassa~\ref{sec:extra}.
+
+Näitä yksityiskohtia lukuunottamatta ESP8266:n ohjelmointi tehdään laitteiston
+läheistä C:tä käyttäen.
 
 \section{ESP8266 moduulin käyttäminen ilman mikrokontrolleria}
 \label{sec:extra}
+
+Ohjelmoinnissa tulee ottaa huomioon IRAM:n pieni koko = ICACHE\_FLASH\_ATTR
+kaikkialle ja myös se että suorituksen ei pitäisi viipyä omassa koodissa yli
+10ms (maksimiraja)
 
 \section{Yhteenveto}
 

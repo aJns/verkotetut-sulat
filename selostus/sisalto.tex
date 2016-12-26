@@ -110,7 +110,7 @@ paristo.
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\linewidth]{nappi-ja-paristo}
-  \caption{}
+  \caption{Piirilevyn etupuoli pariston ja napin kera}
 \label{fig:nappi-ja-paristo}
 \end{figure}
 
@@ -146,22 +146,56 @@ Varsinkin ohjelmoinnissa tulee ottaa huomioon muutamia teknisiä yksityiskohtia
 jotka liittyvät piirin ominaisuuksiin. Käsittelen näitä tarkemmin
 kohdassa~\ref{sec:extra}.
 
-ESP8266:n ohjelmointi tehdään laitteiston läheistä C:tä käyttäen. Espressif:n
+ESP8266:n ohjelmointi tehdään laitteistonläheistä C:tä käyttäen. Espressif:n
 tarjoama kirjasto hoitaa suuren osan verkkoliikenteen yksityiskohdista, ja
 tarjoaa yksinkertaisen API:n esimerkiksi langattomaan verkkoon yhdistämistä ja
-TCP ja UDP yhteyksien käsittelemistä varten.abstrahoi suuren osan
-verkkoliikenteen yksityiskohdista, ja tarjoaa yksinkertaisen API:n esimerkiksi
-langattomaan verkkoon yhdistämistä ja TCP ja UDP yhteyksien käsittelemistä
-varten. Main-funktio ja kontrollerin hallintasilmukka on myös täysin kirjaston
-hallussa. Kirjasto mahdollistaa oman koodin lisäämisen määrittelemällä
-\texttt{user\_init()} funktion, jonka ohjelmoija voi toteuttaa.  Tässä
-funktiossa voi sitten lisätä erilaisia callbackkeja eri tapahtumille, mm.
-``Yhdistetty verkkoon'', ``TCP yhteys muodostettu'', ``Yhteys katkesi'' jne.
-Tarvittaessa voi myös luoda ajastimia joihin voi liittää callbackkeja, jos on
-tarve säännöllisille toimille.
+TCP ja UDP yhteyksien käsittelemistä varten. Main-funktio ja kontrollerin
+hallintasilmukka on myös täysin kirjaston hallussa. Kirjasto mahdollistaa oman
+koodin lisäämisen määrittelemällä \texttt{user\_init()} funktion, jonka
+ohjelmoija voi toteuttaa.  Tässä funktiossa voi sitten lisätä erilaisia
+callbackkeja eri tapahtumille, mm.  ``Yhdistetty verkkoon'', ``TCP yhteys
+muodostettu'', ``Yhteys katkesi'' jne.  Tarvittaessa voi myös luoda ajastimia
+joihin voi liittää callbackkeja, jos on tarve säännöllisille toimille.
 
-Tähän settiä oman ohjelman toimintalogiikasta, eg mitä tehdään ja missä
-järjestyksessä
+Omassa ohjelmassani käytän sekä ajastin- että tapahtumapohjaisia callbackkeja.
+Langattomaan verkkoon yhdistäminen sekä itse palvelimeen yhdistäminen ja
+HTTP-pyynnön lähettäminen perustuu tapahtumiin reagoimiseen. Ensin tietenkin
+yhdistetään langattomaan verkkoon. Olen kuullut toteutuksista, joissa ESP luo
+käynnistyessään ensin oman ad hoc verkkonsa. Käyttäjän yhdistäessä tähän
+verkkoon ESP esittää käyttäjälle web-käyttöliittymän, jossa käyttäjä voi antaa
+verkon tiedot johon ESP:n halutaan yhdistävän. Itselläni toteutus oli aika
+paljon yksinkertaisempi; Verkon SSID ja salasana on kovakoodattu koodiini.
+Itse verkkoon liittyminen käy muutamalla rivillä:
+\begin{lstlisting}[language=C]
+    struct station_config stationConf;
+    wifi_set_opmode( STATION_MODE );
+    os_memcpy(&stationConf.ssid, wifi_ssid, 32);
+    os_memcpy(&stationConf.password, wifi_passwd, 32);
+    wifi_station_set_config(&stationConf);
+    wifi_set_event_handler_cb(wifi_connected);
+    wifi_station_connect();
+\end{lstlisting}
+Kun ESP on yhdistänyt verkkoon, päästään \texttt{wifi\_connected} callbackkiin,
+jossa ensimmäisenä selvitetään palvelimen IP-osoite \texttt{gethostbyname}
+funktion avulla, jonka jälkeen yhdistetään serveriin TCP-yhteydellä, lähetetään
+HTTP-pyyntö, ja käsitellään palvelimen vastaus. Jokainen näistä toiminnoista
+käsitellään omassa funktiossaan, joka rekisteröidään callbackkinä sitä
+edeltävässä. Selvennyksenä esimerkki: Kun TCP-yhteys on luotu, siirrytään
+``Yhdistetty palvelimeen'' tapahtumalle rekisteröityyn callbackkiin, jossa
+rekisteröidään callback ``Palvelin vastasi'' tapahtumalle, ja lähetetään
+HTTP-pyyntö palvelimelle. HTTP-pyynnön lähetyksen jälkeen yhteys katkeaa.
+
+Ajastimen callback tarkistaa fyysisen napin tilan, varmistaa että LEDin
+todellinen tila vastaa haluttua tilaa (ja tarvittaessa muuttaa sitä) sekä
+seuraa onko yhteys palvelimeen vielä olemassa. Kuten mainitsinkin yllä, ESP:n
+SDK kirjastossa on myös mahdollisuus registeröidä callback ``Yhteys katkesi''
+-tapahtumaan. Jostain syystä se ei kuitenkaan toiminut täysin odotetusti:
+Jonkun aikaa tapahtumaketju \texttt{yhdistä \(\rightarrow{}\) lähetä pyyntö
+\(\rightarrow{}\) yhdistä uudelleen} toimii, mutta aina jonkun ajan päästä
+ohjelma lakkaa yhdistämästä uudelleen, enkä valitettavasti keksinyt miksi.
+Myöskään HTTP:n ``keep-alive'' yhteysparametri ei jostain syystä toiminut
+odotetusti, joten tyydyin (epätäydelliseen ja luultavasti tehottomaan)
+ajastinratkaisuun.
 
 \section{ESP8266 moduulin käyttäminen ilman mikrokontrolleria}
 \label{sec:extra}

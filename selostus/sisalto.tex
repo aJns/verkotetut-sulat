@@ -116,8 +116,8 @@ paristo.
 
 \section{Ohjelmisto}
 Ohjelmisto koostuu itse sulautetun laitteen ohjelmistosta, nettisivusta jonka
-kautta käyttäjä näkee ja voi muuttaa ledin tilan ja web API:sta jonka kautta
-ledin tila luetaan ja muutetaan.
+kautta käyttäjä näkee ja voi muuttaa LEDin tilan ja web API:sta jonka kautta
+ESP tai nettisivun JavaScript koodi voi lukea tai muuttaa LEDin tilan.
 
 \subsection{Nettisivun ja API:n ohjelmointi}
 Nettisivun käyttäjäpuoli on yksinkertainen sivu, jossa lukee LEDin nykyinen
@@ -146,8 +146,22 @@ Varsinkin ohjelmoinnissa tulee ottaa huomioon muutamia teknisiä yksityiskohtia
 jotka liittyvät piirin ominaisuuksiin. Käsittelen näitä tarkemmin
 kohdassa~\ref{sec:extra}.
 
-Näitä yksityiskohtia lukuunottamatta ESP8266:n ohjelmointi tehdään laitteiston
-läheistä C:tä käyttäen.
+ESP8266:n ohjelmointi tehdään laitteiston läheistä C:tä käyttäen. Espressif:n
+tarjoama kirjasto hoitaa suuren osan verkkoliikenteen yksityiskohdista, ja
+tarjoaa yksinkertaisen API:n esimerkiksi langattomaan verkkoon yhdistämistä ja
+TCP ja UDP yhteyksien käsittelemistä varten.abstrahoi suuren osan
+verkkoliikenteen yksityiskohdista, ja tarjoaa yksinkertaisen API:n esimerkiksi
+langattomaan verkkoon yhdistämistä ja TCP ja UDP yhteyksien käsittelemistä
+varten. Main-funktio ja kontrollerin hallintasilmukka on myös täysin kirjaston
+hallussa. Kirjasto mahdollistaa oman koodin lisäämisen määrittelemällä
+\texttt{user\_init()} funktion, jonka ohjelmoija voi toteuttaa.  Tässä
+funktiossa voi sitten lisätä erilaisia callbackkeja eri tapahtumille, mm.
+``Yhdistetty verkkoon'', ``TCP yhteys muodostettu'', ``Yhteys katkesi'' jne.
+Tarvittaessa voi myös luoda ajastimia joihin voi liittää callbackkeja, jos on
+tarve säännöllisille toimille.
+
+Tähän settiä oman ohjelman toimintalogiikasta, eg mitä tehdään ja missä
+järjestyksessä
 
 \section{ESP8266 moduulin käyttäminen ilman mikrokontrolleria}
 \label{sec:extra}

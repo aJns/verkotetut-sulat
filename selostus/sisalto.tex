@@ -200,9 +200,34 @@ ajastinratkaisuun.
 \section{ESP8266 moduulin käyttäminen ilman mikrokontrolleria}
 \label{sec:extra}
 
-Ohjelmoinnissa tulee ottaa huomioon IRAM:n pieni koko = ICACHE\_FLASH\_ATTR
-kaikkialle ja myös se että suorituksen ei pitäisi viipyä omassa koodissa yli
-10ms (maksimiraja)
+Ensimmäinen erityispiirre joka täytyy huomioida ESP:tä ohjelmoitaessa juontaa
+juurensa laitteen käyttö-tarkoituksesta; Laite on ensisijaisesti tarkoitettu
+verkkoyhteyksien hallinnointiin, jotka vaativat säännöllisiä toimenpiteitä.
+Siksi ohjelman suoritus ei saa viettää liikaa aikaa omassa koodissa, vaan
+SDK-koodille tulee antaa tarpeeksi paljon aikaa hoitaa verkkoliikennettä.
+Dokumentaation mukaan ohjelmoijan toteuttamissa funktioissa saa maksimissaan
+käyttää 10ms suoritusaikaa. Tämä osaltaan johtaa koodiin joka perustuu lähinnä
+callbackkeihin jotka suoritetaan tapahtumien ja ajastimien tahdissa. Omassa
+koodissani melkein kaikki funktiot olivat callbackkeja, mikä voi olla aluksi
+hieman hämmentävää, ja joka tekee debuggauksesta tietenkin vähän vaikeampaa.
+
+Toinen erityispiirre ESP:n ohjelmoinnissa on laitteen pieni käytettävissä oleva
+IRAM (Instruction RAM). IRAM on siis muistia johon ajettavan ohjelman funktiot
+ladataan laitteen käynnistyessä. IRAM:ia on piirissä yhteensä 32 kilotavua,
+mutta tästä on ohjelmoijan käytössä kuitenkin vain pieni osa, käsittääkseni
+noin 2--3 kilotavua, koska iso osa kirjaston koodista ajetaan IRAM:sta. Näin
+pieni tila funktioille tekisi monimutkaisemmasta toiminnallisuudesta
+mahdotonta, mutta onneksi piirin flash-muisti on tarpeeksi nopeaa että funktiot
+voidaan ajaa sieltä käsin. Jotta piiri osaa ajaa funktion flash-muistista, se
+täytyy merkitä macrolla \texttt{ICACHE\_FLASH\_ATTR} Pienen tilan takia
+käytännössä kaikki omat funktiot tulee merkitä kyseisellä macrolla, mutta
+poikkeuksiakin on; Tietääkseni funktioita joissa käsitellään flash-muistia ei
+voi ajaa sieltä.  Jostain syystä (jota ei dokumentaatiossa selitetä) macroa ei
+myöskään saa käyttää ajastincallbackissä.  Voi myös olla tilanteita joissa
+kuitenkin tarvitaan IRAM:ia sen nopeuden takia.  Sivuhuomiona voi todeta että
+tämä macro ja sen kriittinen tarpeellisuus on melko huonosti dokumentoitu;
+Ainoa syy miksi itse tiedän siitä on google-haulla löytämäni foorumiviesti,
+virallisesta dokumentaatiosta en löytänyt sille selitystä.
 
 \section{Yhteenveto}
 

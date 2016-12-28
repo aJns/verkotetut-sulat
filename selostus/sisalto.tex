@@ -238,14 +238,25 @@ tasaisena. Olen itse myös tyytyväinen webbisivuuni, joka toimii odotetusti
 melko pienellä määrällä koodia, vaikka toiminnallisuus ei olekaan päätä
 huimaava.
 
-\begin{itemize}
-  \item Pienellä vaivalla olisin voinut lisätä piirille USB-to-UART piirin ja
-    USB liittimen, joka olisi tehnyt ohjelmoinnista todella paljon helpompaa.
-    Lisää tästä kohdassa~\ref{sec:extra}
-\end{itemize}
+Isoimmat ongelmat johtuivat oikeastaan siitä että käytin ESP moduulia
+itsenäisesti ilman mikrokontrolleria. Yksi niistä oli piirin ohjelmoiminen
+sarjaliitännän kautta. Suurin osa projektin tuskaisista hetkistä tuli juuri sen
+takia että käytin sarjayhteyteen piikkirimaa ja Bus Pirate~\cite{buspirate}
+kloonia, jonka seurauksena \textit{parhaimmillaan} joka viides
+ohjelmointiyritys onnistui. Pienellä vaivalla olisin voinut lisätä piirille
+USB-to-UART piirin ja USB liittimen, joka olisi tehnyt ohjelmoinnista todella
+paljon helpompaa.
+
+Toinen ongelma itse ESP:n ohjelmoinnissa oli dokumentaation vähyys. Kun
+pitäytyy työkaluissa ja komponenteissa joita käytetään laajasti, tottuu
+helposti siihen että pienimpäänkin ongelmaan löytyy Google-haulla
+yksityiskohtainen vastaus. ESP ja varsinkin C ovat tietenkin molemmat yleisesti
+käytettyjä harrastepiireissäkin, mutta ilmeisesti ESP:n ohjelmoiminen suoraan
+ilman käyttöjärjestelmää (esim. NodeMCU) on melko harvinaista, joten ohjeita
+siihen ei aivan helpolla löydy.
 
 Lopullisena yhteenvetona voin todeta että ESP moduulin käyttäminen ilman
-ohjaavaa mikrokontrolleria oli uusi ja hyvinkin opettava kokemus.
+ohjaavaa mikrokontrolleria oli kuitenkin uusi ja hyvinkin opettava kokemus.
 Tulevaisuudessa käyttäisin moduulia itsenäisesti projekteissa joissa on
 tarvetta mahdollisimman yksinkertaiselle piirilevylle, joka pienen koon tai
 virrankulutuksen takia, ja joissa ei kuitenkaan ole kovia suoritusvaatimuksia
